@@ -1,5 +1,5 @@
 pipeline {
-    agent any
+    agent { label 'superlinux' } // Limit to node named superlinux
 
     environment {
         SONARQUBE_URL = 'http://192.168.1.85:9000'
@@ -7,12 +7,12 @@ pipeline {
         GIT_REPO = 'https://github.com/XP2600-hub/nhorizon-java-container.git'
         DOCKER_IMAGE = 'xp2600/japp:latest'
         DOCKER_CREDENTIALS_ID = 'dockerhub_id'
+        PROJECT_KEY = 'myProjectKey' // Define your project key here
     }
 
     stages {
         stage('Checkout Code') {
             steps {
-                // Clone the GitHub repository
                 git url: "${GIT_REPO}", branch: 'master' // Specify the branch if needed
             }
         }
@@ -20,7 +20,6 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    // Build the Docker image from the Dockerfile in the repo
                     sh "docker build -t ${DOCKER_IMAGE} ."
                 }
             }
@@ -29,9 +28,7 @@ pipeline {
         stage('Login to Docker Hub') {
             steps {
                 script {
-                    // Login to Docker Hub using Jenkins credentials
                     docker.withRegistry('https://index.docker.io/v1/', DOCKER_CREDENTIALS_ID) {
-                        // Push the image to Docker Hub
                         sh "docker push ${DOCKER_IMAGE}"
                     }
                 }
@@ -41,7 +38,6 @@ pipeline {
         stage('SonarQube Scan') {
             steps {
                 script {
-                    // Run SonarQube scanner inside the Docker container
                     sh """
                     docker run --rm \
                         -e SONAR_HOST_URL=${SONARQUBE_URL} \
@@ -49,15 +45,29 @@ pipeline {
                         -v \$(pwd):/usr/src \
                         -w /usr/src \
                         sonarsource/sonar-scanner-cli \
-                        -Dsonar.projectKey=myProjectKey \
+                        -Dsonar.projectKey=${PROJECT_KEY} \
                         -Dsonar.sources=. \
                         -Dsonar.docker.image=${DOCKER_IMAGE}
                     """
                 }
             }
         }
-    }
 
+        stage('SonarQube Report') {
+            steps {
+                script {
+                    waitUntil {
+                        def sonarResult = sh(script: "curl -s -u ${SONARQUBE_TOKEN}: ${SONARQUBE_URL}/api/project_analyses/search?project=${PROJECT_KEY}", returnStdout: true)
+                        return sonarResult.contains('\"status\":\"SUCCESS\"')
+                    }
+                    echo "SonarQube analysis completed successfully."
+                    def metrics = sh(script: "curl -s -u ${SONARQUBE_TOKEN}: ${SONARQUBE_URL}/api/measures/component?component=${PROJECT_KEY}&metricKeys=ncloc,coverage,bugs,vulnerabilities,code_smells", returnStdout: true)
+                    echo "SonarQube Metrics: ${metrics}"
+                }
+            }
+        }
+    }
+    
     post {
         success {
             echo 'Scan completed successfully.'
