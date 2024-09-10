@@ -3,6 +3,7 @@ pipeline {
   // * Git: https://plugins.jenkins.io/git/
   // * Workflow Aggregator: https://plugins.jenkins.io/workflow-aggregator/
   // * JUnit: https://plugins.jenkins.io/junit/
+  //Guys change the branch to 'failing-test' to fail the test!! (Compare goood branch with bad one! before merging!)
   agent 'any'
   stages {
     stage('Checkout') {
