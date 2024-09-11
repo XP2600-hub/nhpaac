@@ -5,7 +5,7 @@ pipeline {
         stage('Hello') {
             steps {
                 script {
-                    echo 'Hello, Jenkins users!, this 3rd session!'
+                    echo 'Hello, Jenkins heros!, this 3rd session!'
                 }
             }
         }
