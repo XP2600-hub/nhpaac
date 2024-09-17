@@ -1,0 +1,37 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Setup') {
+            steps {
+                script {
+                    // Get the hostname and IP address
+                    def hostname = sh(script: 'hostname', returnStdout: true).trim()
+                    def ip = sh(script: 'hostname -I | awk "{print $1}"', returnStdout: true).trim()
+                    
+                    // Echo the information
+                    echo "Hostname: ${hostname}"
+                    echo "IP Address: ${ip}"
+                }
+            }
+        }
+
+        stage('Run Some Tasks') {
+            steps {
+                // Simulate some work (replace with actual tasks)
+                echo 'Running tasks...'
+                sleep time: 5, unit: 'SECONDS' // Simulate a delay
+            }
+        }
+    }
+
+    post {
+        always {
+            script {
+                // Calculate the duration
+                def duration = currentBuild.durationString
+                echo "Total time taken: ${duration}"
+            }
+        }
+    }
+}
