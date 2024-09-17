@@ -1,0 +1,35 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Parallel Sleep Stages') {
+            parallel {
+                stage('Sleep for 20 seconds - Stage 1') {
+                    steps {
+                        echo 'Starting Stage 1...'
+                        sleep time: 20, unit: 'SECONDS'
+                        echo 'Finished Stage 1.'
+                    }
+                }
+
+                stage('Sleep for 20 seconds - Stage 2') {
+                    steps {
+                        echo 'Starting Stage 2...'
+                        sleep time: 20, unit: 'SECONDS'
+                        echo 'Finished Stage 2.'
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            script {
+                // Calculate and echo the total duration
+                def duration = currentBuild.durationString
+                echo "Total time taken: ${duration}"
+            }
+        }
+    }
+}
